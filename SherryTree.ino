@@ -1,5 +1,7 @@
 #include "SherryTree.h"
 
+#include "AnimationPatterns.h"
+
 #include <Adafruit_NeoPixel.h>
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
@@ -13,67 +15,89 @@
 // Which pin on the Arduino is connected to the WS2812Bs?
 const int LED_STRIP_PIN{ D3 };
 
+// How long between each animation frame?
+const int FRAME_DURATION{ 80 };
+
+// Connection details for our MQTT protocol server.
 const char * const REMOTE_MQTT_HOST{ "192.168.3.97" };
 const unsigned int REMOTE_MQTT_PORT{ 1883 };
 
 // How many NeoPixels are attached to the Arduino?
 const unsigned int NUMBER_OF_PIXELS{ 50 };
 
+// Buffer & manager for the WS2812Bs
 Adafruit_NeoPixel g_pixels{ NUMBER_OF_PIXELS, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800 };
+// Automatic configuration host in the event of a missing SSID.
 WiFiManager g_wifi_manager{};
+// Wifi client device for communicating.
 WiFiClient g_wifi_client{};
+// Protocol manager for the wifi client.
 PubSubClient g_pubsub_client{ g_wifi_client };
 
 void setup() {
+	// Debug text over slow serial.
 	Serial.begin(9600);
 	Serial.println("Booting up.");
 
 	g_pixels.begin(); // This initializes the NeoPixel library.
-	g_wifi_manager.autoConnect("AP-Christmas");
+
+	// Launches an AP for the user to apply configuration.
+	g_wifi_manager.autoConnect("AP-Sherry");
 
 	Serial.println(WiFi.localIP());
 
+	// Setup the connection to the server.
 	g_pubsub_client.setServer(REMOTE_MQTT_HOST, REMOTE_MQTT_PORT);
 	g_pubsub_client.setCallback(callback);
 }
 
+/// Set all the pixels to one color.
 void setAll(Adafruit_NeoPixel& pix, uint8_t r, uint8_t g, uint8_t b) {
-	for (int i = 0; i < NUMBER_OF_PIXELS; i++) {
+	for (int i = 0; i < pix.numPixels(); i++) {
 		pix.setPixelColor(i, r, g, b);
 	}
 }
 
-int readInteger(Stream& s, char delim) {
-	while (!s.available()) {}
-
-	String str = s.readStringUntil(delim);
-	//s.read();
-	s.print(str);
-
-	str.trim();
-	return str.toInt();
-}
-
 void loop() {
+	// The timestamp of the last iteration.
+	static long int lastTime = -1;
+	// Workaround for https://github.com/esp8266/Arduino/issues/500
+	if (lastTime == -1) lastTime = millis();
+
+	// The time left before a refresh.
+	static long int timeLeft = FRAME_DURATION;
+
+	// Make sure we can get out data!
 	if (!g_pubsub_client.connected()) {
 		connect_mqtt();
 	}
 	g_pubsub_client.loop();
 
-	g_pixels.show();
+	// Timing
+	if (timeLeft < 0) {
+		g_pixels.show();
 
-	pinMode(D4, OUTPUT);
-	digitalWrite(D4, !digitalRead(D4));
-	delay(75);
+		timeLeft += FRAME_DURATION;
+
+		rotateUp(g_pixels);
+	}
+	if (timeLeft < -500) { timeLeft = 0; }
+	long int currentTime = millis();
+	timeLeft -= (currentTime - lastTime);
+	lastTime = currentTime;
+
 }
 
+/// Called every time we get a message from our MQTT server.
 void callback(char* topic, byte* message, unsigned int length) {
 	Serial.print("Message recieved (");
 	Serial.print(topic);
 	Serial.println(")");
 
+	// Blank the pixels.
 	g_pixels.clear();
 
+	// Black magic
 	String buffer = "";
 	uint8_t colours[3];
 	int channelCount = 0;
@@ -97,6 +121,7 @@ void callback(char* topic, byte* message, unsigned int length) {
 
 }
 
+/// Retry until we get a working connection onto our previously configured MQTT server.
 void connect_mqtt(void) {
 	while (!g_pubsub_client.connected()) {
 		Serial.print("Attempting to connect to MQTT on ");

@@ -15,13 +15,14 @@ extern const unsigned int REMOTE_MQTT_PORT;
 
 extern const unsigned int NUMBER_OF_PIXELS;
 
+extern const int FRAME_DURATION;
+
 extern Adafruit_NeoPixel g_pixels;
 extern WiFiManager g_wifi_manager;
 extern WiFiClient  g_wifi_client;
 extern PubSubClient g_pubsub_client;
 
 void setAll(Adafruit_NeoPixel&, uint8_t, uint8_t, uint8_t);
-int readInteger(Stream&, char);
 void callback(char*, byte*, unsigned int);
 void connect_mqtt(void);
 
