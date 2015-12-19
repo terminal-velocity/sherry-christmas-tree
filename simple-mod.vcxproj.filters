@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="simple-mod.ino" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="__vm\.simple-mod.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -25,6 +22,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PubSubClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StringStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SherryTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -35,5 +38,8 @@
     <ClCompile Include="PubSubClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SherryTree.ino" />
   </ItemGroup>
 </Project>

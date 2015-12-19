@@ -1,3 +1,5 @@
+#include "SherryTree.h"
+
 #include <Adafruit_NeoPixel.h>
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
@@ -8,49 +10,35 @@
 
 #include "StringStream.h"
 
-extern "C" {
-#include <user_interface.h>
-}
-
 // Which pin on the Arduino is connected to the WS2812Bs?
-const int PIN = D3;
+const int LED_STRIP_PIN{ D3 };
 
-const char *MQTT_HOST = "192.168.3.97";
-int MQTT_PORT = 1883;
+const char * const REMOTE_MQTT_HOST{ "192.168.3.97" };
+const unsigned int REMOTE_MQTT_PORT{ 1883 };
 
 // How many NeoPixels are attached to the Arduino?
-const int PIXEL_COUNT = 50;
+const unsigned int NUMBER_OF_PIXELS{ 50 };
 
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(PIXEL_COUNT, PIN, NEO_GRB + NEO_KHZ800);
-
-const int TIME_DELAY = 800; // delay for half a second
-
-WiFiManager wifiManage;
-
-WiFiClient wfClient;
-PubSubClient pubSub(wfClient);
-
-void setAll(Adafruit_NeoPixel&, uint8_t, uint8_t, uint8_t);
-int readInteger(Stream&, char);
-void callback(char*, byte*, unsigned int);
-void connect_mqtt(void);
+Adafruit_NeoPixel g_pixels{ NUMBER_OF_PIXELS, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800 };
+WiFiManager g_wifi_manager{};
+WiFiClient g_wifi_client{};
+PubSubClient g_pubsub_client{ g_wifi_client };
 
 void setup() {
 	Serial.begin(9600);
 	Serial.println("Booting up.");
 
-	pixels.begin(); // This initializes the NeoPixel library.
-	wifiManage.autoConnect("AP-Christmas");
+	g_pixels.begin(); // This initializes the NeoPixel library.
+	g_wifi_manager.autoConnect("AP-Christmas");
 
-	
 	Serial.println(WiFi.localIP());
 
-	pubSub.setServer(MQTT_HOST, MQTT_PORT);
-	pubSub.setCallback(callback);
+	g_pubsub_client.setServer(REMOTE_MQTT_HOST, REMOTE_MQTT_PORT);
+	g_pubsub_client.setCallback(callback);
 }
 
 void setAll(Adafruit_NeoPixel& pix, uint8_t r, uint8_t g, uint8_t b) {
-	for (int i = 0; i < PIXEL_COUNT; i++) {
+	for (int i = 0; i < NUMBER_OF_PIXELS; i++) {
 		pix.setPixelColor(i, r, g, b);
 	}
 }
@@ -67,23 +55,16 @@ int readInteger(Stream& s, char delim) {
 }
 
 void loop() {
-	if (!pubSub.connected()) {
+	if (!g_pubsub_client.connected()) {
 		connect_mqtt();
 	}
-	pubSub.loop();
+	g_pubsub_client.loop();
 
-	pixels.show();
+	g_pixels.show();
 
 	pinMode(D4, OUTPUT);
 	digitalWrite(D4, !digitalRead(D4));
 	delay(75);
-
-	size_t freemem = system_get_free_heap_size();
-	if (freemem < 10 * 1024) {
-		Serial.print("WARN: Only ");
-		Serial.print(freemem);
-		Serial.println(" free bytes of heap!");
-	}
 }
 
 void callback(char* topic, byte* message, unsigned int length) {
@@ -91,7 +72,7 @@ void callback(char* topic, byte* message, unsigned int length) {
 	Serial.print(topic);
 	Serial.println(")");
 
-	pixels.clear();
+	g_pixels.clear();
 
 	String buffer = "";
 	uint8_t colours[3];
@@ -106,7 +87,7 @@ void callback(char* topic, byte* message, unsigned int length) {
 
 			if (channelCount == 3) {
 				channelCount = 0;
-				pixels.setPixelColor(ledCount++, colours[0], colours[1], colours[2]);
+				g_pixels.setPixelColor(ledCount++, colours[0], colours[1], colours[2]);
 			}
 		}
 		else {
@@ -117,21 +98,21 @@ void callback(char* topic, byte* message, unsigned int length) {
 }
 
 void connect_mqtt(void) {
-	while (!pubSub.connected()) {
+	while (!g_pubsub_client.connected()) {
 		Serial.print("Attempting to connect to MQTT on ");
-		Serial.print(MQTT_HOST);
+		Serial.print(REMOTE_MQTT_HOST);
 		Serial.print(":");
-		Serial.println(MQTT_PORT);
+		Serial.println(REMOTE_MQTT_PORT);
 
-		if (pubSub.connect("ChristmasTree")) {
+		if (g_pubsub_client.connect("ChristmasTree")) {
 			Serial.println("Connection successful!");
 
-			pubSub.subscribe("led");
-			pubSub.publish("connected", "Connected OK");
+			g_pubsub_client.subscribe("led");
+			g_pubsub_client.publish("connected", "Connected OK");
 		}
 		else {
 			Serial.print("Connection failure:");
-			Serial.println(pubSub.state());
+			Serial.println(g_pubsub_client.state());
 
 			Serial.println("Preparing for retry");
 			delay(2500);

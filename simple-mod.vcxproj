@@ -22,6 +22,7 @@
     <ProjectGuid>{54543A07-C3D7-453A-A3FA-C69DAAA2725E}</ProjectGuid>
     <RootNamespace>simplemod</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>SherryTree</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -114,12 +115,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="simple-mod.ino">
+    <None Include="SherryTree.ino">
       <FileType>CppCode</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PubSubClient.h" />
+    <ClInclude Include="SherryTree.h" />
+    <ClInclude Include="StringStream.h" />
     <ClInclude Include="WiFiManager.h" />
     <ClInclude Include="__vm\.simple-mod.vsarduino.h" />
   </ItemGroup>
