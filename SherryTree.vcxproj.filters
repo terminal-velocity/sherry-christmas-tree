@@ -27,9 +27,6 @@
     <ClInclude Include="SherryTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="StringStream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="WiFiManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -126,9 +126,6 @@
     <ClInclude Include="SherryTree.h">
       <FileType>CppCode</FileType>
     </ClInclude>
-    <ClInclude Include="StringStream.h">
-      <FileType>CppCode</FileType>
-    </ClInclude>
     <ClInclude Include="WiFiManager.h">
       <FileType>CppCode</FileType>
     </ClInclude>

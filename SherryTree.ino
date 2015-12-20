@@ -22,7 +22,7 @@ const int LED_STRIP_PIN{ D3 };
 const int FRAME_DURATION{ 33 };
 
 // Connection details for our MQTT protocol server.
-const char * const REMOTE_MQTT_HOST{ "192.168.3.97" };
+const char * const REMOTE_MQTT_HOST{ "sherrythetree.com" };
 const unsigned int REMOTE_MQTT_PORT{ 1883 };
 
 // Buffer & manager for the WS2812Bs
