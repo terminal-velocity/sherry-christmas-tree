@@ -2,6 +2,7 @@
 
 #include <Adafruit_NeoPixel.h>
 
+extern float sinf(float);
 extern float floorf(float);
 
 uint8_t g_backBuffer[NUMBER_OF_PIXELS][3];
@@ -60,11 +61,11 @@ void directCopy(Adafruit_NeoPixel& pix) {
 	}
 }
 
-const int GAP = 600;
+const int GAP = 550;
 void rainbowMode(int ms, Adafruit_NeoPixel& target) {
 	static unsigned int phase = 0;
 
-	phase += ms;
+	phase += ms * (1.0f + 0.6f*sinf(phase / 2000.0f));
 
 	for (int led = 0; led < NUMBER_OF_PIXELS; led++) {
 		int localPhase = phase + (2 * GAP * led) / NUMBER_OF_PIXELS;
