@@ -10,20 +10,20 @@
 #include "WiFiManager.h"
 #include "PubSubClient.h"
 
-#include "StringStream.h"
+volatile static bool displayData = true;
+void toggleDisplay(void) { 
+	displayData = !displayData;
+}
 
 // Which pin on the Arduino is connected to the WS2812Bs?
 const int LED_STRIP_PIN{ D3 };
 
 // How long between each animation frame?
-const int FRAME_DURATION{ 80 };
+const int FRAME_DURATION{ 33 };
 
 // Connection details for our MQTT protocol server.
 const char * const REMOTE_MQTT_HOST{ "192.168.3.97" };
 const unsigned int REMOTE_MQTT_PORT{ 1883 };
-
-// How many NeoPixels are attached to the Arduino?
-const unsigned int NUMBER_OF_PIXELS{ 50 };
 
 // Buffer & manager for the WS2812Bs
 Adafruit_NeoPixel g_pixels{ NUMBER_OF_PIXELS, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800 };
@@ -49,6 +49,9 @@ void setup() {
 	// Setup the connection to the server.
 	g_pubsub_client.setServer(REMOTE_MQTT_HOST, REMOTE_MQTT_PORT);
 	g_pubsub_client.setCallback(callback);
+
+	pinMode(D5, INPUT_PULLUP);
+	attachInterrupt(D5, toggleDisplay, FALLING);
 }
 
 /// Set all the pixels to one color.
@@ -57,6 +60,7 @@ void setAll(Adafruit_NeoPixel& pix, uint8_t r, uint8_t g, uint8_t b) {
 		pix.setPixelColor(i, r, g, b);
 	}
 }
+
 
 void loop() {
 	// The timestamp of the last iteration.
@@ -75,11 +79,20 @@ void loop() {
 
 	// Timing
 	if (timeLeft < 0) {
+		if (displayData) {
+			directCopy(g_pixels);
+		}
+		else {
+			rainbowMode(FRAME_DURATION, g_pixels);
+		}
 		g_pixels.show();
 
 		timeLeft += FRAME_DURATION;
 
-		rotateUp(g_pixels);
+		//rotateUp(g_pixels);
+
+		pinMode(D4, OUTPUT);
+		digitalWrite(D4, !digitalRead(D4));
 	}
 	if (timeLeft < -500) { timeLeft = 0; }
 	long int currentTime = millis();
@@ -111,7 +124,9 @@ void callback(char* topic, byte* message, unsigned int length) {
 
 			if (channelCount == 3) {
 				channelCount = 0;
-				g_pixels.setPixelColor(ledCount++, colours[0], colours[1], colours[2]);
+				g_backBuffer[ledCount][0] = colours[0];
+				g_backBuffer[ledCount][1] = colours[1];
+				g_backBuffer[ledCount++][2] = colours[2];
 			}
 		}
 		else {

@@ -13,7 +13,7 @@ extern const int LED_STRIP_PIN;
 extern const char * const REMOTE_MQTT_HOST;
 extern const unsigned int REMOTE_MQTT_PORT;
 
-extern const unsigned int NUMBER_OF_PIXELS;
+#define NUMBER_OF_PIXELS 50
 
 extern const int FRAME_DURATION;
 
